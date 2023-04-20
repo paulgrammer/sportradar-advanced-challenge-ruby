@@ -1,0 +1,35 @@
+version: '3.7'
+services:
+  pipeline:
+    build: .
+    image: nhl_pipeline
+    container_name: pipeline
+    command: >
+      sh -c "
+        echo 'Creating db...';
+        rake db:create;
+        echo 'Running migrations...';
+        rake db:migrate;
+        echo 'Running pipeline';
+        ruby bin/pipeline.rb;
+      "
+    depends_on:
+      - db
+    environment:
+      DATABASE_USERNAME: postgres
+      DATABASE_NAME: NHL
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      TZ: America/New_York
+      SCHEDULE_DATE: ${SCHEDULE_DATE}
+      MODE: ${MODE}
+  db:
+    image: postgres
+    restart: always 
+    environment:
+      PGDATA: /postgresql
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - db-volume:/postgresql
+volumes:
+  db-volume:
